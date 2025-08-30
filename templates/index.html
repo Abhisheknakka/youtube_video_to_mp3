@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Audio Downloader</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            justify-content: center;
+        }
+        
+        .type-btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+        
+        .type-btn.active {
+            background: #ff6b6b;
+            color: white;
+            transform: scale(1.05);
+        }
+        
+        .type-btn:not(.active) {
+            background: #f8f9fa;
+            color: #666;
+        }
+        
+        .type-btn:hover:not(.active) {
+            background: #e9ecef;
+            transform: translateY(-2px);
+        }
+        
+        .input-section {
+            margin-bottom: 30px;
+        }
+        
+        .url-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 16px;
+            margin-bottom: 20px;
+            box-sizing: border-box;
+        }
+        
+        .url-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .download-btn {
+            background: #28a745;
+            color: white;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+        
+        .download-btn:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+        
+        .download-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            display: none;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .loading {
+            display: none;
+            margin-top: 20px;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+        }
+        
+        .footer p {
+            color: #666;
+            font-size: 14px;
+            margin: 0;
+            font-style: italic;
+        }
+        
+        .video-info {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .video-thumbnail {
+            flex-shrink: 0;
+        }
+        
+        .video-thumbnail img {
+            width: 120px;
+            height: 90px;
+            border-radius: 10px;
+            object-fit: cover;
+            border: 2px solid #e9ecef;
+        }
+        
+        .video-details {
+            flex: 1;
+        }
+        
+        .video-details h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+            font-size: 18px;
+            line-height: 1.3;
+        }
+        
+        .video-details p {
+            margin: 5px 0;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .video-details p:first-of-type {
+            color: #667eea;
+            font-weight: 500;
+        }
+        
+        .filename-info {
+            margin-top: 15px !important;
+            padding: 8px 12px;
+            background: #e8f5e8;
+            border-radius: 8px;
+            border-left: 4px solid #28a745;
+            font-size: 13px !important;
+        }
+        
+        .filename-info span {
+            font-weight: bold;
+            color: #155724;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 YouTube Audio Downloader</h1>
+        
+        <div class="button-group">
+            <button class="type-btn active" onclick="selectType('video')">📹 YouTube Video</button>
+            <button class="type-btn" onclick="selectType('shorts')">🎬 YouTube Shorts</button>
+        </div>
+        
+        <div class="input-section">
+            <input type="text" class="url-input" id="urlInput" placeholder="Paste YouTube URL here..." />
+            <button class="download-btn" onclick="downloadAudio()" id="downloadBtn">Download MP3</button>
+        </div>
+        
+        <div class="video-info" id="videoInfo" style="display: none;">
+            <div class="video-thumbnail">
+                <img id="videoThumbnail" src="" alt="Video thumbnail" />
+            </div>
+            <div class="video-details">
+                <h3 id="videoTitle">Video Title</h3>
+                <p id="videoUploader">Uploader</p>
+                <p id="videoDuration">Duration</p>
+                <p class="filename-info">📁 Will download as: <span id="downloadFilename">filename.mp3</span></p>
+            </div>
+        </div>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Downloading audio... Please wait</p>
+        </div>
+        
+        <div class="status" id="status"></div>
+        
+        <div class="footer">
+            <p>Made with ❤️ for APSA</p>
+        </div>
+    </div>
+
+    <script>
+        let selectedType = 'video';
+        
+        function selectType(type) {
+            selectedType = type;
+            document.querySelectorAll('.type-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        }
+        
+        function downloadAudio() {
+            const url = document.getElementById('urlInput').value.trim();
+            const downloadBtn = document.getElementById('downloadBtn');
+            const loading = document.getElementById('loading');
+            const status = document.getElementById('status');
+            const videoInfo = document.getElementById('videoInfo');
+            
+            if (!url) {
+                showStatus('Please enter a YouTube URL', 'error');
+                return;
+            }
+            
+            // Show loading and hide video info
+            loading.style.display = 'block';
+            videoInfo.style.display = 'none';
+            downloadBtn.disabled = true;
+            hideStatus();
+            
+            fetch('/download', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    url: url,
+                    type: selectedType
+                })
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.blob();
+                } else {
+                    return response.json().then(data => {
+                        throw new Error(data.error || 'Download failed');
+                    });
+                }
+            })
+            .then(blob => {
+                // Create download link
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `youtube_audio_${selectedType}.mp3`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                
+                showStatus('Download completed successfully!', 'success');
+            })
+            .catch(error => {
+                showStatus('Error: ' + error.message, 'error');
+            })
+            .finally(() => {
+                loading.style.display = 'none';
+                downloadBtn.disabled = false;
+            });
+        }
+        
+        function showStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+            status.style.display = 'block';
+        }
+        
+        function hideStatus() {
+            document.getElementById('status').style.display = 'none';
+        }
+        
+        // Enter key support
+        document.getElementById('urlInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                downloadAudio();
+            }
+        });
+        
+        // Fetch video info when URL is pasted or typed
+        let urlTimeout;
+        document.getElementById('urlInput').addEventListener('input', function(e) {
+            const url = e.target.value.trim();
+            
+            // Clear previous timeout
+            clearTimeout(urlTimeout);
+            
+            // Hide video info if URL is empty
+            if (!url) {
+                document.getElementById('videoInfo').style.display = 'none';
+                return;
+            }
+            
+            // Wait for user to finish typing (500ms delay)
+            urlTimeout = setTimeout(() => {
+                if (url && isYouTubeUrl(url)) {
+                    fetchVideoInfo(url);
+                }
+            }, 500);
+        });
+        
+        function isYouTubeUrl(url) {
+            return url.includes('youtube.com') || url.includes('youtu.be');
+        }
+        
+        function fetchVideoInfo(url) {
+            fetch('/get-video-info', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ url: url })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    displayVideoInfo(data);
+                } else {
+                    console.error('Error fetching video info:', data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+        
+        function displayVideoInfo(data) {
+            const videoInfo = document.getElementById('videoInfo');
+            const thumbnail = document.getElementById('videoThumbnail');
+            const title = document.getElementById('videoTitle');
+            const uploader = document.getElementById('videoUploader');
+            const duration = document.getElementById('videoDuration');
+            const downloadFilename = document.getElementById('downloadFilename');
+            
+            // Set thumbnail
+            thumbnail.src = data.thumbnail;
+            
+            // Set title
+            title.textContent = data.title;
+            
+            // Set uploader
+            uploader.textContent = `by ${data.uploader}`;
+            
+            // Set duration
+            const durationMinutes = Math.floor(data.duration / 60);
+            const durationSeconds = data.duration % 60;
+            duration.textContent = `${durationMinutes}:${durationSeconds.toString().padStart(2, '0')}`;
+            
+            // Set download filename - just first word
+            const firstWord = data.title.split(' ')[0] || 'Video';
+            downloadFilename.textContent = `${firstWord}.mp3`;
+            
+            // Show video info
+            videoInfo.style.display = 'flex';
+        }
+    </script>
+</body>
+</html>
