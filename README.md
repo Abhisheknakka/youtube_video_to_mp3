@@ -6,11 +6,8 @@ A simple web application to download audio from YouTube videos and shorts as MP3
 
 - 🎵 Download audio from YouTube videos and shorts
 - 🎬 Support for both regular videos and YouTube Shorts
-- 📱 Clean, responsive web interface
-- ⚡ Fast MP3 conversion
-- 🔒 Secure URL validation
 
-## Setup
+## Setup to run this locally
 
 1. **Install Python dependencies:**
    ```bash
