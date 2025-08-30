@@ -66,3 +66,34 @@ application is deployed in render
 https://youtube-video-to-mp3.onrender.com/upload-cookies
 
 ```
+
+
+
+## 🚨 Important Notes
+
+- **Personal Use Only:** This application is for personal use only
+- **Terms of Service:** Please respect YouTube's terms of service
+- **Copyright:** Respect copyright laws when downloading content
+- **Rate Limiting:** Be mindful of YouTube's rate limits
+
+## 🐛 Troubleshooting
+
+### Common Issues
+
+1. **"Sign in to confirm you're not a bot"**
+   - Solution: Upload cookies.txt file via `/upload-cookies`
+
+2. **Download fails with no error**
+   - Check if FFmpeg is properly installed
+   - Verify internet connection
+   - Try a different video URL
+
+3. **App won't start**
+   - Ensure Python 3.7+ is installed
+   - Check if port 5001 is available
+   - Verify all dependencies are installed
+
+4. **Audio quality issues**
+   - The app automatically selects the best available format
+   - Some videos may have limited audio quality
+
