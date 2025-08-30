@@ -29,9 +29,6 @@ def is_valid_youtube_url(url):
 
 def download_audio(url, output_path):
     """Download audio from YouTube URL"""
-    # Try to get cookies from available browser
-    browser = get_browser_cookies()
-    
     ydl_opts = {
         'format': '249/bestaudio[ext=m4a]/bestaudio[ext=webm]/bestaudio/best',
         'outtmpl': output_path + '.%(ext)s',
@@ -46,12 +43,12 @@ def download_audio(url, output_path):
         'fragment_retries': 3,
     }
     
-    # Add cookies if browser is available
-    if browser:
-        ydl_opts['cookiesfrombrowser'] = (browser,)
-        print(f"Using cookies from {browser}")
+    # Try to use cookies.txt if it exists
+    if os.path.exists('cookies.txt'):
+        ydl_opts['cookiefile'] = 'cookies.txt'
+        print("Using cookies.txt file")
     else:
-        print("No browser cookies available, trying without authentication")
+        print("No cookies.txt found, trying without authentication")
     
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         try:
@@ -154,6 +151,40 @@ def test_download():
             
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@app.route('/test-different-videos')
+def test_different_videos():
+    """Test different videos to see which ones work without cookies"""
+    test_videos = [
+        "https://www.youtube.com/watch?v=dQw4w9WgXcQ",  # Rick Roll (very popular)
+        "https://www.youtube.com/watch?v=9bZkp7q19f0",  # Gangnam Style (very popular)
+        "https://www.youtube.com/watch?v=kJQP7kiw5Fk",  # Despacito (very popular)
+    ]
+    
+    results = []
+    for video_url in test_videos:
+        try:
+            ydl_opts = {
+                'quiet': True,
+                'no_warnings': False,
+            }
+            
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(video_url, download=False)
+                
+            results.append({
+                'url': video_url,
+                'title': info.get('title', 'Unknown'),
+                'status': 'success'
+            })
+        except Exception as e:
+            results.append({
+                'url': video_url,
+                'error': str(e),
+                'status': 'failed'
+            })
+    
+    return jsonify({'results': results})
 
 @app.route('/get-video-info', methods=['POST'])
 def get_video_info():
