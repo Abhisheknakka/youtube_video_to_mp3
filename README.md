@@ -1,6 +1,3 @@
-# youtube_video_to_mp3
-
-
 # YouTube Audio Downloader
 
 A simple web application to download audio from YouTube videos and shorts as MP3 files.
