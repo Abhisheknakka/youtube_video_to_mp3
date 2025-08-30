@@ -4,8 +4,15 @@ import os
 import tempfile
 from urllib.parse import urlparse
 import subprocess
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+
+# Ensure uploads directory exists
+UPLOAD_FOLDER = 'uploads'
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
 
 def get_browser_cookies():
     """Detect available browsers and return cookies"""
@@ -266,6 +273,104 @@ def download():
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@app.route('/upload-cookies', methods=['GET', 'POST'])
+def upload_cookies():
+    """Upload cookies.txt file for YouTube authentication"""
+    if request.method == 'POST':
+        if 'cookies_file' not in request.files:
+            return jsonify({'error': 'No file uploaded'}), 400
+        
+        file = request.files['cookies_file']
+        if file.filename == '':
+            return jsonify({'error': 'No file selected'}), 400
+        
+        if file and file.filename.endswith('.txt'):
+            filename = secure_filename(file.filename)
+            filepath = os.path.join(UPLOAD_FOLDER, filename)
+            file.save(filepath)
+            
+            # Move to root directory as cookies.txt
+            cookies_path = 'cookies.txt'
+            if os.path.exists(cookies_path):
+                os.remove(cookies_path)
+            os.rename(filepath, cookies_path)
+            
+            return jsonify({
+                'message': 'Cookies uploaded successfully!',
+                'status': 'success'
+            })
+        else:
+            return jsonify({'error': 'Please upload a .txt file'}), 400
+    
+    # GET request - show upload form
+    return '''
+    <!DOCTYPE html>
+    <html>
+    <head><title>Upload Cookies</title></head>
+    <body>
+        <h2>Upload YouTube Cookies</h2>
+        <p>To fix the "Sign in to confirm you're not a bot" error:</p>
+        <ol>
+            <li>Install "Get cookies.txt" extension in Chrome/Edge</li>
+            <li>Go to YouTube and make sure you're logged in</li>
+            <li>Click the extension and export cookies</li>
+            <li>Upload the cookies.txt file below</li>
+        </ol>
+        <form method="post" enctype="multipart/form-data">
+            <input type="file" name="cookies_file" accept=".txt" required>
+            <input type="submit" value="Upload Cookies">
+        </form>
+        <p><a href="/">Back to main app</a></p>
+    </body>
+    </html>
+    '''
+
+@app.route('/check-cookies')
+def check_cookies():
+    """Check if cookies are working and test a simple video"""
+    try:
+        # Check if cookies.txt exists
+        cookies_exist = os.path.exists('cookies.txt')
+        
+        if not cookies_exist:
+            return jsonify({
+                'cookies_status': 'not_found',
+                'message': 'No cookies.txt file found. Upload cookies to fix bot detection.',
+                'upload_url': '/upload-cookies'
+            })
+        
+        # Test with a simple video
+        test_url = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+        
+        ydl_opts = {
+            'quiet': True,
+            'no_warnings': False,
+        }
+        
+        # Add cookies if they exist
+        if cookies_exist:
+            ydl_opts['cookiefile'] = 'cookies.txt'
+        
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(test_url, download=False)
+            
+        return jsonify({
+            'cookies_status': 'working',
+            'message': 'Cookies are working! Video info extracted successfully.',
+            'test_video': {
+                'title': info.get('title', 'Unknown'),
+                'duration': info.get('duration', 0),
+                'status': 'success'
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'cookies_status': 'error',
+            'message': f'Error testing cookies: {str(e)}',
+            'upload_url': '/upload-cookies'
+        })
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5001)
