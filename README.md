@@ -32,7 +32,7 @@ A simple web application to download audio from YouTube videos and shorts as MP3
 
 3. **Run the application:**
    ```bash
-   python app.py
+   python3 app.py
    ```
 
 4. **Open your browser and go to:**
