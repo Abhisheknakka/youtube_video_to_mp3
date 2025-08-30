@@ -3,8 +3,24 @@ import yt_dlp
 import os
 import tempfile
 from urllib.parse import urlparse
+import subprocess
 
 app = Flask(__name__)
+
+def get_browser_cookies():
+    """Detect available browsers and return cookies"""
+    browsers = ['chrome', 'firefox', 'safari', 'edge', 'brave']
+    for browser in browsers:
+        try:
+            # Test if browser cookies are accessible
+            ydl_opts = {'cookiesfrombrowser': (browser,)}
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                # Just test cookie access, don't download
+                pass
+            return browser
+        except:
+            continue
+    return None
 
 def is_valid_youtube_url(url):
     """Check if the URL is a valid YouTube URL"""
@@ -13,6 +29,9 @@ def is_valid_youtube_url(url):
 
 def download_audio(url, output_path):
     """Download audio from YouTube URL"""
+    # Try to get cookies from available browser
+    browser = get_browser_cookies()
+    
     ydl_opts = {
         'format': '249/bestaudio[ext=m4a]/bestaudio[ext=webm]/bestaudio/best',
         'outtmpl': output_path + '.%(ext)s',
@@ -22,12 +41,17 @@ def download_audio(url, output_path):
         'keepvideo': False,
         'quiet': False,
         'no_warnings': False,
-        # Add these options to handle anti-bot protection
-        'cookiefile': 'cookies.txt',  # Optional: use cookies file
         'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
         'extractor_retries': 3,
         'fragment_retries': 3,
     }
+    
+    # Add cookies if browser is available
+    if browser:
+        ydl_opts['cookiesfrombrowser'] = (browser,)
+        print(f"Using cookies from {browser}")
+    else:
+        print("No browser cookies available, trying without authentication")
     
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         try:
