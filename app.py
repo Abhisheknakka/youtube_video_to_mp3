@@ -22,6 +22,11 @@ def download_audio(url, output_path):
         'keepvideo': False,
         'quiet': False,
         'no_warnings': False,
+        # Add these options to handle anti-bot protection
+        'cookiefile': 'cookies.txt',  # Optional: use cookies file
+        'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'extractor_retries': 3,
+        'fragment_retries': 3,
     }
     
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
